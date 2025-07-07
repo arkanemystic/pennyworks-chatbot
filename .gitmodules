@@ -1,0 +1,3 @@
+[submodule "csv2api"]
+	path = csv2api
+	url = https://github.com/arkanemystic/csv2api-router
