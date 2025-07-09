@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-from backend.vector_store import get_chroma_collection, query_similar
+from backend.vector_store import get_chroma_collection
 from sentence_transformers import SentenceTransformer
 from sklearn.manifold import TSNE
 from datetime import datetime
@@ -77,11 +77,14 @@ st.subheader("Embedding Space Visualization (t-SNE)")
 if filtered:
     embeddings = [all_docs["embeddings"][all_docs["documents"].index(doc)] for doc, _ in filtered]
     docs_short = [doc[:40] + ("..." if len(doc) > 40 else "") for doc, _ in filtered]
-    tsne = TSNE(n_components=2, random_state=42)
-    emb_2d = tsne.fit_transform(np.array(embeddings))
-    df_plot = pd.DataFrame({"x": emb_2d[:,0], "y": emb_2d[:,1], "label": docs_short})
-    st.scatter_chart(df_plot, x="x", y="y", color=None)
-    for i, row in df_plot.iterrows():
-        st.text(f"{row['label']} @ ({row['x']:.2f}, {row['y']:.2f})")
+    if len(embeddings) > 1:
+        tsne = TSNE(n_components=2, random_state=42)
+        emb_2d = tsne.fit_transform(np.array(embeddings))
+        df_plot = pd.DataFrame({"x": emb_2d[:,0], "y": emb_2d[:,1], "label": docs_short})
+        st.scatter_chart(df_plot, x="x", y="y", color=None)
+        for i, row in df_plot.iterrows():
+            st.text(f"{row['label']} @ ({row['x']:.2f}, {row['y']:.2f})")
+    else:
+        st.info("Need at least 2 embeddings for t-SNE visualization.")
 else:
     st.info("Not enough data for embedding visualization.")
