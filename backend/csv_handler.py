@@ -86,6 +86,41 @@ def penny_llm_chat(user_input: str, csv_path: str = None) -> str:
         logging.error(f"LLM request failed: {e}")
         return "I'm having trouble connecting to my AI assistant right now. Please try again."
 
+def extract_routing_decision(llm_response: str) -> str:
+    """Extract the routing decision from LLM response, handling various formats"""
+    # Clean the response
+    cleaned = llm_response.strip()
+    logging.info(f"Original LLM response: '{cleaned}'")
+    
+    # Remove common prefixes
+    prefixes_to_remove = ['Penny:', 'Penny says:', 'Response:', 'Assistant:']
+    for prefix in prefixes_to_remove:
+        if cleaned.startswith(prefix):
+            cleaned = cleaned[len(prefix):].strip()
+    
+    # Remove emojis and extra whitespace but preserve alphanumeric and underscores
+    cleaned = re.sub(r'[^\w\s_]', '', cleaned).strip()
+    logging.info(f"Cleaned response: '{cleaned}'")
+    
+    # Check for exact routing keywords - be more flexible
+    if 'ROUTE_TO_CSV2API' in cleaned.upper():
+        logging.info("Found ROUTE_TO_CSV2API keyword")
+        return 'ROUTE_TO_CSV2API'
+    elif 'CSV_REQUIRED' in cleaned.upper():
+        logging.info("Found CSV_REQUIRED keyword")
+        return 'CSV_REQUIRED'
+    else:
+        # Additional check for intent-based routing when LLM doesn't follow exact format
+        csv_processing_keywords = ['process', 'analyze', 'extract', 'get transactions', 'convert', 'parse', 'read csv']
+        user_intent_matches = any(keyword in cleaned.lower() for keyword in csv_processing_keywords)
+        
+        if user_intent_matches:
+            logging.info("No exact routing keyword found, but detected CSV processing intent - routing to CSV2API")
+            return 'ROUTE_TO_CSV2API'
+        else:
+            logging.info("No routing keywords found, using direct response")
+            return 'DIRECT_RESPONSE'
+
 def find_csv2api_executable() -> Optional[str]:
     """Find the correct csv2api executable path"""
     # Get the project root directory
@@ -151,6 +186,7 @@ def run_csv2api_subprocess(csv_path: str, user_prompt: str = None) -> Dict[str, 
     csv2api_dir = os.path.dirname(executable)
     # Set PYTHONPATH to the parent of 'src' (csv2api/) for correct imports
     csv2api_root = os.path.abspath(os.path.join(csv2api_dir, '..')) if os.path.basename(csv2api_dir) == 'src' else csv2api_dir
+    
     # Choose correct CLI args for main.py
     if os.path.basename(executable) == 'main.py':
         cmd = [sys.executable, executable, '-i', csv_path]
@@ -270,42 +306,6 @@ def run_csv2api_subprocess(csv_path: str, user_prompt: str = None) -> Dict[str, 
         'stdout': '',
         'stderr': 'All command attempts failed'
     }
-
-def extract_routing_decision(llm_response: str) -> str:
-    """Extract the routing decision from LLM response, handling various formats"""
-    
-    # Clean the response
-    cleaned = llm_response.strip()
-    logging.info(f"Original LLM response: '{cleaned}'")
-    
-    # Remove common prefixes
-    prefixes_to_remove = ['Penny:', 'Penny says:', 'Response:', 'Assistant:']
-    for prefix in prefixes_to_remove:
-        if cleaned.startswith(prefix):
-            cleaned = cleaned[len(prefix):].strip()
-    
-    # Remove emojis and extra whitespace but preserve alphanumeric and underscores
-    cleaned = re.sub(r'[^\w\s_]', '', cleaned).strip()
-    logging.info(f"Cleaned response: '{cleaned}'")
-    
-    # Check for exact routing keywords - be more flexible
-    if 'ROUTE_TO_CSV2API' in cleaned.upper():
-        logging.info("Found ROUTE_TO_CSV2API keyword")
-        return 'ROUTE_TO_CSV2API'
-    elif 'CSV_REQUIRED' in cleaned.upper():
-        logging.info("Found CSV_REQUIRED keyword")
-        return 'CSV_REQUIRED'
-    else:
-        # Additional check for intent-based routing when LLM doesn't follow exact format
-        csv_processing_keywords = ['process', 'analyze', 'extract', 'get transactions', 'convert', 'parse', 'read csv']
-        user_intent_matches = any(keyword in cleaned.lower() for keyword in csv_processing_keywords)
-        
-        if user_intent_matches:
-            logging.info("No exact routing keyword found, but detected CSV processing intent - routing to CSV2API")
-            return 'ROUTE_TO_CSV2API'
-        else:
-            logging.info("No routing keywords found, using direct response")
-            return 'DIRECT_RESPONSE'
 
 def handle_user_message(user_input: str, csv_path: str = None) -> str:
     """Main handler for user messages with improved csv2api routing"""
