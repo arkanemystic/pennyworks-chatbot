@@ -136,8 +136,8 @@ def find_csv2api_executable() -> Optional[str]:
     
     # Common possible paths for the main executable
     possible_paths = [
+        os.path.join(csv2api_dir, 'src', 'main.py'),  # Most likely based on error
         os.path.join(csv2api_dir, 'main.py'),
-        os.path.join(csv2api_dir, 'src', 'main.py'),
         os.path.join(csv2api_dir, 'csv2api.py'),
         os.path.join(csv2api_dir, 'app.py'),
         os.path.join(csv2api_dir, 'run.py'),
@@ -152,6 +152,12 @@ def find_csv2api_executable() -> Optional[str]:
     try:
         contents = os.listdir(csv2api_dir)
         logging.info(f"csv2api directory contents: {contents}")
+        
+        # Also check src directory if it exists
+        src_dir = os.path.join(csv2api_dir, 'src')
+        if os.path.exists(src_dir):
+            src_contents = os.listdir(src_dir)
+            logging.info(f"csv2api/src directory contents: {src_contents}")
     except Exception as e:
         logging.error(f"Could not list csv2api directory: {e}")
     
@@ -159,7 +165,7 @@ def find_csv2api_executable() -> Optional[str]:
     return None
 
 def run_csv2api_subprocess(csv_path: str, user_prompt: str = None) -> Dict[str, Any]:
-    """Execute csv2api as a subprocess with proper error handling and PYTHONPATH set for src imports"""
+    """Execute csv2api as a subprocess with proper error handling and correct argument format"""
     
     # Validate CSV file first
     if not is_valid_csv_file(csv_path):
@@ -182,40 +188,33 @@ def run_csv2api_subprocess(csv_path: str, user_prompt: str = None) -> Dict[str, 
             'stderr': 'csv2api executable not found'
         }
     
-    # Prepare the command
+    # Prepare the command with correct arguments based on the error message
     csv2api_dir = os.path.dirname(executable)
-    # Set PYTHONPATH to the parent of 'src' (csv2api/) for correct imports
     csv2api_root = os.path.abspath(os.path.join(csv2api_dir, '..')) if os.path.basename(csv2api_dir) == 'src' else csv2api_dir
     
-    # Choose correct CLI args for main.py
-    if os.path.basename(executable) == 'main.py':
-        cmd = [sys.executable, executable, '-i', csv_path]
-        if user_prompt:
-            cmd.extend(['--query', user_prompt])
-    else:
-        cmd = [sys.executable, executable, '--csv', csv_path]
-        if user_prompt:
-            cmd.extend(['--query', user_prompt])
+    # Based on the error message, the script expects -i/--input flag
+    # Primary command format that should work
+    cmd = [sys.executable, executable, '-i', csv_path]
     
-    # Alternative command formats to try
+    # Alternative command formats to try if the primary fails
     alternative_commands = [
         [sys.executable, executable, '--input', csv_path],
-        [sys.executable, executable, csv_path],
-        [sys.executable, executable, '--file', csv_path],
+        [sys.executable, executable, '-i', csv_path, '--workers', '1'],  # Add workers param if needed
+        [sys.executable, executable, '--input', csv_path, '--workers', '1'],
     ]
     
-    if user_prompt:
-        alternative_commands = [
-            [sys.executable, executable, '-i', csv_path, '--query', user_prompt],
-            [sys.executable, executable, '--input', csv_path, '--prompt', user_prompt],
-            [sys.executable, executable, csv_path, user_prompt],
-        ]
+    # If user prompt is provided, we'll pass it as an environment variable or ignore it
+    # since the main.py doesn't seem to accept query parameters based on the error
     
     commands_to_try = [cmd] + alternative_commands
     
     # Set PYTHONPATH to csv2api_root for src imports
     env = os.environ.copy()
     env['PYTHONPATH'] = csv2api_root + os.pathsep + env.get('PYTHONPATH', '')
+    
+    # If user_prompt is provided, set it as an environment variable
+    if user_prompt:
+        env['CSV2API_QUERY'] = user_prompt
     
     for attempt, current_cmd in enumerate(commands_to_try, 1):
         try:
@@ -247,7 +246,7 @@ def run_csv2api_subprocess(csv_path: str, user_prompt: str = None) -> Dict[str, 
             else:
                 # If this isn't the last attempt, continue to next command
                 if attempt < len(commands_to_try):
-                    logging.warning(f"Command {attempt} failed, trying next alternative...")
+                    logging.warning(f"Command {attempt} failed with return code {result.returncode}, trying next alternative...")
                     continue
                 
                 # Last attempt failed

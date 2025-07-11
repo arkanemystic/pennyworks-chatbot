@@ -309,3 +309,83 @@ main.py: error: the following arguments are required: -i/--input
 
 [2025-07-11 01:25:11,151] ERROR - root - csv2api execution failed: csv2api failed with return code 2
 [2025-07-11 01:25:11,306] DEBUG - urllib3.connectionpool - https://us.i.posthog.com:443 "POST /batch/ HTTP/1.1" 200 15
+[2025-07-11 10:08:16,162] INFO - ==================================================
+[2025-07-11 10:08:16,163] INFO - NEW USER MESSAGE HANDLER SESSION
+[2025-07-11 10:08:16,163] INFO - User input: can you get transactions from the csv
+[2025-07-11 10:08:16,163] INFO - CSV path: /var/folders/nb/1nmz4lr56rz3wcmmcgglfyx00000gn/T/tmppr2r0b4b.csv
+[2025-07-11 10:08:16,163] INFO - CSV file exists: True
+[2025-07-11 10:08:16,163] INFO - CSV file valid: True
+[2025-07-11 10:08:16,163] INFO - Getting LLM routing decision...
+[2025-07-11 10:08:36,531] INFO - LLM response: 'ROUTE_TO_CSV2API'
+[2025-07-11 10:08:36,534] INFO - Original LLM response: 'ROUTE_TO_CSV2API'
+[2025-07-11 10:08:36,534] INFO - Cleaned response: 'ROUTE_TO_CSV2API'
+[2025-07-11 10:08:36,534] INFO - Found ROUTE_TO_CSV2API keyword
+[2025-07-11 10:08:36,534] INFO - Routing decision: ROUTE_TO_CSV2API
+[2025-07-11 10:08:36,535] INFO - ROUTING: ROUTE_TO_CSV2API
+[2025-07-11 10:08:36,535] INFO - Executing csv2api subprocess...
+[2025-07-11 10:08:36,536] INFO - Looking for csv2api in: /Users/devrashie/Documents/csProjects/pennyworks-chatbot/csv2api
+[2025-07-11 10:08:36,536] INFO - Found csv2api executable at: /Users/devrashie/Documents/csProjects/pennyworks-chatbot/csv2api/src/main.py
+[2025-07-11 10:08:36,536] INFO - Attempt 1: Running csv2api command: /Library/Developer/CommandLineTools/usr/bin/python3 /Users/devrashie/Documents/csProjects/pennyworks-chatbot/csv2api/src/main.py -i /var/folders/nb/1nmz4lr56rz3wcmmcgglfyx00000gn/T/tmppr2r0b4b.csv
+[2025-07-11 10:08:36,623] INFO - csv2api return code: 0
+[2025-07-11 10:08:36,623] INFO - csv2api stdout: 
+[2025-07-11 10:08:36,623] WARNING - csv2api stderr: 2025-07-11 10:08:36,620 - src.pipeline.csv_cleaner - INFO - Starting to process CSV file: /var/folders/nb/1nmz4lr56rz3wcmmcgglfyx00000gn/T/tmppr2r0b4b.csv
+2025-07-11 10:08:36,620 - src.pipeline.csv_cleaner - WARNING - Row 1: No valid tx_hash found in any column
+2025-07-11 10:08:36,620 - src.pipeline.csv_cleaner - WARNING - Row 2: No valid tx_hash found in any column
+2025-07-11 10:08:36,620 - src.pipeline.csv_cleaner - WARNING - Row 3: No valid tx_hash found in any column
+2025-07-11 10:08:36,620 - src.pipeline.csv_cleaner - WARNING - Row 4: No valid tx_hash found in any column
+2025-07-11 10:08:36,620 - src.pipeline.csv_cleaner - WARNING - Row 5: No valid tx_hash found in any column
+2025-07-11 10:08:36,620 - src.pipeline.csv_cleaner - WARNING - Row 6: No valid tx_hash found in any column
+2025-07-11 10:08:36,620 - src.pipeline.csv_cleaner - WARNING - Row 7: No valid tx_hash found in any column
+2025-07-11 10:08:36,620 - src.pipeline.csv_cleaner - WARNING - Row 8: No valid tx_hash found in any column
+2025-07-11 10:08:36,620 - src.pipeline.csv_cleaner - WARNING - Row 9: No valid tx_hash found in any column
+2025-07-11 10:08:36,620 - src.pipeline.csv_cleaner - WARNING - Row 10: No valid tx_hash found in any column
+2025-07-11 10:08:36,620 - src.pipeline.csv_cleaner - INFO - CSV processing summary:
+2025-07-11 10:08:36,620 - src.pipeline.csv_cleaner - INFO - Total rows processed: 10
+2025-07-11 10:08:36,620 - src.pipeline.csv_cleaner - INFO - Rows skipped: 10
+2025-07-11 10:08:36,620 - src.pipeline.csv_cleaner - INFO - Rows successfully processed: 0
+2025-07-11 10:08:36,620 - src.pipeline.csv_cleaner - INFO - Function type counts: {<FunctionType.TAG_AS_EXPENSE: 'tag_as_expense'>: 0, <FunctionType.GET_TRANSACTION: 'get_transaction'>: 0, <FunctionType.GET_RECEIPT: 'get_receipt'>: 0}
+2025-07-11 10:08:36,620 - src.pipeline.csv_cleaner - WARNING - No valid rows found, defaulting to get_transaction
+2025-07-11 10:08:36,620 - __main__ - INFO - Classified CSV as get_transaction with 0 rows
+2025-07-11 10:08:36,620 - src.pipeline.batch_caller - INFO - Processed 0 rows: 0 successful, 0 failed
+2025-07-11 10:08:36,620 - __main__ - INFO - No rows were successfully processed
+
+[2025-07-11 10:08:36,623] INFO - csv2api executed successfully
+[2025-07-11 10:10:11,790] INFO - CSV file uploaded: small_fill_account_by.csv
+[2025-07-11 10:10:18,526] INFO - CSV file uploaded: small_fill_account_by.csv
+[2025-07-11 10:10:18,536] INFO - User input: fill account by for csv
+[2025-07-11 10:10:18,539] INFO - ==================================================
+[2025-07-11 10:10:18,539] INFO - NEW USER MESSAGE HANDLER SESSION
+[2025-07-11 10:10:18,539] INFO - User input: fill account by for csv
+[2025-07-11 10:10:18,539] INFO - CSV path: /var/folders/nb/1nmz4lr56rz3wcmmcgglfyx00000gn/T/tmpfyanoqul.csv
+[2025-07-11 10:10:18,540] INFO - CSV file exists: True
+[2025-07-11 10:10:18,541] INFO - CSV file valid: True
+[2025-07-11 10:10:18,541] INFO - Getting LLM routing decision...
+[2025-07-11 10:10:38,118] INFO - LLM response: 'Penny: Hi there! It looks like you have a CSV file ready for processing. Could you clarify what you'd like to do with it? Are you looking to analyze, extract, get, or convert the data? Let me know how I can assist you! 🧠'
+[2025-07-11 10:10:38,119] INFO - Original LLM response: 'Penny: Hi there! It looks like you have a CSV file ready for processing. Could you clarify what you'd like to do with it? Are you looking to analyze, extract, get, or convert the data? Let me know how I can assist you! 🧠'
+[2025-07-11 10:10:38,119] INFO - Cleaned response: 'Hi there It looks like you have a CSV file ready for processing Could you clarify what youd like to do with it Are you looking to analyze extract get or convert the data Let me know how I can assist you'
+[2025-07-11 10:10:38,119] INFO - No exact routing keyword found, but detected CSV processing intent - routing to CSV2API
+[2025-07-11 10:10:38,119] INFO - Routing decision: ROUTE_TO_CSV2API
+[2025-07-11 10:10:38,119] INFO - ROUTING: ROUTE_TO_CSV2API
+[2025-07-11 10:10:38,120] INFO - Executing csv2api subprocess...
+[2025-07-11 10:10:38,120] INFO - Looking for csv2api in: /Users/devrashie/Documents/csProjects/pennyworks-chatbot/csv2api
+[2025-07-11 10:10:38,120] INFO - Found csv2api executable at: /Users/devrashie/Documents/csProjects/pennyworks-chatbot/csv2api/src/main.py
+[2025-07-11 10:10:38,121] INFO - Attempt 1: Running csv2api command: /Library/Developer/CommandLineTools/usr/bin/python3 /Users/devrashie/Documents/csProjects/pennyworks-chatbot/csv2api/src/main.py -i /var/folders/nb/1nmz4lr56rz3wcmmcgglfyx00000gn/T/tmpfyanoqul.csv
+[2025-07-11 10:10:38,203] INFO - csv2api return code: 0
+[2025-07-11 10:10:38,203] INFO - csv2api stdout: 
+[2025-07-11 10:10:38,203] WARNING - csv2api stderr: 2025-07-11 10:10:38,200 - src.pipeline.csv_cleaner - INFO - Starting to process CSV file: /var/folders/nb/1nmz4lr56rz3wcmmcgglfyx00000gn/T/tmpfyanoqul.csv
+2025-07-11 10:10:38,200 - src.pipeline.csv_cleaner - WARNING - Row 1: No valid tx_hash found in any column
+2025-07-11 10:10:38,200 - src.pipeline.csv_cleaner - WARNING - Row 2: No valid tx_hash found in any column
+2025-07-11 10:10:38,200 - src.pipeline.csv_cleaner - WARNING - Row 3: No valid tx_hash found in any column
+2025-07-11 10:10:38,200 - src.pipeline.csv_cleaner - WARNING - Row 4: No valid tx_hash found in any column
+2025-07-11 10:10:38,200 - src.pipeline.csv_cleaner - WARNING - Row 5: No valid tx_hash found in any column
+2025-07-11 10:10:38,200 - src.pipeline.csv_cleaner - INFO - CSV processing summary:
+2025-07-11 10:10:38,200 - src.pipeline.csv_cleaner - INFO - Total rows processed: 5
+2025-07-11 10:10:38,200 - src.pipeline.csv_cleaner - INFO - Rows skipped: 5
+2025-07-11 10:10:38,200 - src.pipeline.csv_cleaner - INFO - Rows successfully processed: 0
+2025-07-11 10:10:38,200 - src.pipeline.csv_cleaner - INFO - Function type counts: {<FunctionType.TAG_AS_EXPENSE: 'tag_as_expense'>: 0, <FunctionType.GET_TRANSACTION: 'get_transaction'>: 0, <FunctionType.GET_RECEIPT: 'get_receipt'>: 0}
+2025-07-11 10:10:38,200 - src.pipeline.csv_cleaner - WARNING - No valid rows found, defaulting to get_transaction
+2025-07-11 10:10:38,200 - __main__ - INFO - Classified CSV as get_transaction with 0 rows
+2025-07-11 10:10:38,200 - src.pipeline.batch_caller - INFO - Processed 0 rows: 0 successful, 0 failed
+2025-07-11 10:10:38,200 - __main__ - INFO - No rows were successfully processed
+
+[2025-07-11 10:10:38,203] INFO - csv2api executed successfully
