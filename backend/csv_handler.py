@@ -17,10 +17,12 @@ PENNY_SYSTEM_PROMPT = (
     "Behavior traits: Greet users warmly and show appreciation for their time. Clarify requests politely if unclear. "
     "Respond with concise, accurate financial help in crypto contexts. Use emoji sparingly for warmth (e.g., 🙂, 📊), but never excessively. "
     "Reaffirm safety, compliance, and professionalism in all interactions. Never generate or respond to inappropriate, off-topic, or NSFW content. "
-    "ROUTING INSTRUCTIONS: "
-    "- If csv_ready is 'true' and the user wants to process, analyze, or convert CSV data, respond with exactly 'ROUTE_TO_CSV2API' "
-    "- If csv_ready is 'false' and the user wants to process CSV data, respond with exactly 'CSV_REQUIRED' "
-    "- Otherwise, provide helpful accounting assistance."
+    "\n"
+    "CRITICAL ROUTING INSTRUCTIONS - FOLLOW EXACTLY: "
+    "- If csv_ready is 'true' and the user wants to process, analyze, extract, get, or convert CSV data, respond with ONLY the text 'ROUTE_TO_CSV2API' and nothing else "
+    "- If csv_ready is 'false' and the user wants to process CSV data, respond with ONLY the text 'CSV_REQUIRED' and nothing else "
+    "- Otherwise, provide helpful accounting assistance "
+    "- DO NOT add any other text, explanations, or prefixes when routing - just the exact routing keyword"
 )
 
 # LLM configuration
@@ -122,7 +124,7 @@ def find_csv2api_executable() -> Optional[str]:
     return None
 
 def run_csv2api_subprocess(csv_path: str, user_prompt: str = None) -> Dict[str, Any]:
-    """Execute csv2api as a subprocess with proper error handling"""
+    """Execute csv2api as a subprocess with proper error handling and PYTHONPATH set for src imports"""
     
     # Validate CSV file first
     if not is_valid_csv_file(csv_path):
@@ -147,11 +149,17 @@ def run_csv2api_subprocess(csv_path: str, user_prompt: str = None) -> Dict[str, 
     
     # Prepare the command
     csv2api_dir = os.path.dirname(executable)
-    cmd = [sys.executable, executable, '--csv', csv_path]
-    
-    # Add user prompt if provided
-    if user_prompt:
-        cmd.extend(['--query', user_prompt])
+    # Set PYTHONPATH to the parent of 'src' (csv2api/) for correct imports
+    csv2api_root = os.path.abspath(os.path.join(csv2api_dir, '..')) if os.path.basename(csv2api_dir) == 'src' else csv2api_dir
+    # Choose correct CLI args for main.py
+    if os.path.basename(executable) == 'main.py':
+        cmd = [sys.executable, executable, '-i', csv_path]
+        if user_prompt:
+            cmd.extend(['--query', user_prompt])
+    else:
+        cmd = [sys.executable, executable, '--csv', csv_path]
+        if user_prompt:
+            cmd.extend(['--query', user_prompt])
     
     # Alternative command formats to try
     alternative_commands = [
@@ -162,13 +170,16 @@ def run_csv2api_subprocess(csv_path: str, user_prompt: str = None) -> Dict[str, 
     
     if user_prompt:
         alternative_commands = [
-            [sys.executable, executable, '--csv', csv_path, '--query', user_prompt],
+            [sys.executable, executable, '-i', csv_path, '--query', user_prompt],
             [sys.executable, executable, '--input', csv_path, '--prompt', user_prompt],
             [sys.executable, executable, csv_path, user_prompt],
         ]
     
-    # Try the main command first, then alternatives
     commands_to_try = [cmd] + alternative_commands
+    
+    # Set PYTHONPATH to csv2api_root for src imports
+    env = os.environ.copy()
+    env['PYTHONPATH'] = csv2api_root + os.pathsep + env.get('PYTHONPATH', '')
     
     for attempt, current_cmd in enumerate(commands_to_try, 1):
         try:
@@ -178,9 +189,9 @@ def run_csv2api_subprocess(csv_path: str, user_prompt: str = None) -> Dict[str, 
                 current_cmd,
                 capture_output=True,
                 text=True,
-                cwd=csv2api_dir,
+                cwd=csv2api_root,
                 timeout=300,  # 5 minute timeout
-                env=os.environ.copy()  # Pass environment variables
+                env=env  # Pass updated environment
             )
             
             logging.info(f"csv2api return code: {result.returncode}")
@@ -260,30 +271,71 @@ def run_csv2api_subprocess(csv_path: str, user_prompt: str = None) -> Dict[str, 
         'stderr': 'All command attempts failed'
     }
 
+def extract_routing_decision(llm_response: str) -> str:
+    """Extract the routing decision from LLM response, handling various formats"""
+    
+    # Clean the response
+    cleaned = llm_response.strip()
+    logging.info(f"Original LLM response: '{cleaned}'")
+    
+    # Remove common prefixes
+    prefixes_to_remove = ['Penny:', 'Penny says:', 'Response:', 'Assistant:']
+    for prefix in prefixes_to_remove:
+        if cleaned.startswith(prefix):
+            cleaned = cleaned[len(prefix):].strip()
+    
+    # Remove emojis and extra whitespace but preserve alphanumeric and underscores
+    cleaned = re.sub(r'[^\w\s_]', '', cleaned).strip()
+    logging.info(f"Cleaned response: '{cleaned}'")
+    
+    # Check for exact routing keywords - be more flexible
+    if 'ROUTE_TO_CSV2API' in cleaned.upper():
+        logging.info("Found ROUTE_TO_CSV2API keyword")
+        return 'ROUTE_TO_CSV2API'
+    elif 'CSV_REQUIRED' in cleaned.upper():
+        logging.info("Found CSV_REQUIRED keyword")
+        return 'CSV_REQUIRED'
+    else:
+        # Additional check for intent-based routing when LLM doesn't follow exact format
+        csv_processing_keywords = ['process', 'analyze', 'extract', 'get transactions', 'convert', 'parse', 'read csv']
+        user_intent_matches = any(keyword in cleaned.lower() for keyword in csv_processing_keywords)
+        
+        if user_intent_matches:
+            logging.info("No exact routing keyword found, but detected CSV processing intent - routing to CSV2API")
+            return 'ROUTE_TO_CSV2API'
+        else:
+            logging.info("No routing keywords found, using direct response")
+            return 'DIRECT_RESPONSE'
+
 def handle_user_message(user_input: str, csv_path: str = None) -> str:
     """Main handler for user messages with improved csv2api routing"""
     
     # Setup logging
     setup_logging()
     
-    logging.info(f"Handling user message: {user_input}")
-    logging.info(f"CSV path provided: {csv_path}")
+    logging.info(f"==================================================")
+    logging.info(f"NEW USER MESSAGE HANDLER SESSION")
+    logging.info(f"User input: {user_input}")
+    logging.info(f"CSV path: {csv_path}")
+    logging.info(f"CSV file exists: {os.path.exists(csv_path) if csv_path else False}")
     logging.info(f"CSV file valid: {is_valid_csv_file(csv_path)}")
     
     # Get LLM routing decision
+    logging.info("Getting LLM routing decision...")
     llm_response = penny_llm_chat(user_input, csv_path)
-    logging.info(f"LLM response: {llm_response}")
+    logging.info(f"LLM response: '{llm_response}'")
     
-    # Parse routing decision
-    response_clean = llm_response.strip()
+    # Extract routing decision with improved parsing
+    routing_decision = extract_routing_decision(llm_response)
+    logging.info(f"Routing decision: {routing_decision}")
     
     # Handle routing decisions
-    if response_clean == 'CSV_REQUIRED':
-        logging.info("Routing decision: CSV_REQUIRED")
+    if routing_decision == 'CSV_REQUIRED':
+        logging.info("ROUTING: CSV_REQUIRED")
         return "Please upload a CSV file first to process your request! 📊"
     
-    elif response_clean == 'ROUTE_TO_CSV2API':
-        logging.info("Routing decision: ROUTE_TO_CSV2API")
+    elif routing_decision == 'ROUTE_TO_CSV2API':
+        logging.info("ROUTING: ROUTE_TO_CSV2API")
         
         # Double-check CSV validity
         if not csv_path or not is_valid_csv_file(csv_path):
@@ -319,7 +371,7 @@ def handle_user_message(user_input: str, csv_path: str = None) -> str:
     
     else:
         # Direct LLM response for non-routing cases
-        logging.info("Routing decision: Direct LLM response")
+        logging.info("ROUTING: Direct LLM response")
         return llm_response
 
 # Legacy compatibility functions

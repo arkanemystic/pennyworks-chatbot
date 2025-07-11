@@ -1,0 +1,4 @@
+date,description,amount,category
+2024-01-01,Test Transaction,100.00,income
+2024-01-02,Test Expense,-50.00,expense
+2024-01-03,Crypto Purchase,-200.00,investment
