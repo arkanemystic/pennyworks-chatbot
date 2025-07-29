@@ -71,21 +71,43 @@ class PennyCSVHandler:
     def get_routing_decision(self, user_input: str, csv_path: str) -> str:
         """
         Determine if request should be routed to CSV2API or handled directly
+        Uses contextual analysis to avoid false positives from keywords
         """
-        # Keywords that indicate CSV processing request
-        csv_processing_keywords = [
-            'get transactions', 'extract transactions', 'process csv',
-            'analyze csv', 'read csv', 'parse csv', 'transactions from csv',
-            'fill account', 'csv2api', 'process transactions'
-        ]
-        
         user_input_lower = user_input.lower()
+
+        # First, detect informational queries about csv2api
+        info_patterns = [
+            'what can csv2api do',
+            'what api calls',
+            'how does csv2api work',
+            'tell me about csv2api',
+            'help with csv2api',
+            'explain csv2api'
+        ]
+        if any(pattern in user_input_lower for pattern in info_patterns):
+            logger.info("Detected informational query about csv2api")
+            return "DIRECT_RESPONSE"
+
+        # Then check for actual CSV processing intent
+        action_verbs = ['process', 'analyze', 'extract', 'get', 'parse']
+        target_nouns = ['transactions', 'data', 'events', 'records']
+        csv_context = ['from the csv', 'in the csv', 'from this file', 'this data']
+
+        # Count matching context patterns
+        context_score = 0
+        if any(verb in user_input_lower for verb in action_verbs):
+            context_score += 1
+        if any(noun in user_input_lower for noun in target_nouns):
+            context_score += 1
+        if any(ctx in user_input_lower for ctx in csv_context):
+            context_score += 1
+
+        # Route to CSV2API only if we have strong contextual evidence
+        if context_score >= 2:
+            logger.info(f"Found CSV processing intent (context score: {context_score}/3)")
+            return "ROUTE_TO_CSV2API"
         
-        for keyword in csv_processing_keywords:
-            if keyword in user_input_lower:
-                logger.info(f"Found CSV processing keyword: {keyword}")
-                return "ROUTE_TO_CSV2API"
-        
+        logger.info(f"Insufficient context for CSV2API routing (score: {context_score}/3)")
         return "DIRECT_RESPONSE"
     
     def process_with_csv2api(self, csv_path: str, user_query: str) -> str:
