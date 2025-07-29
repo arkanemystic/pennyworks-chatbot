@@ -25,7 +25,10 @@ if uploaded_file is not None:
     # Save uploaded file
     with tempfile.NamedTemporaryFile(delete=False, suffix=".csv") as tmp:
         tmp.write(uploaded_file.read())
-        st.session_state["csv_path"] = tmp.name
+        tmp.flush()
+        tmp_name = tmp.name
+    st.session_state["csv_path"] = tmp_name
+    logger.info(f"Temporary CSV saved at: {tmp_name}")
     
     # Show success message
     st.success(f"CSV file '{uploaded_file.name}' uploaded successfully!")

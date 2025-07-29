@@ -1,6 +1,6 @@
 # Penny: Crypto Accounting Chatbot
 
-A standalone Streamlit chatbot app for crypto accounting, featuring CSV upload, DeepSeek R1 (Ollama) LLM integration, ChromaDB vector store, and a friendly, professional Penny persona. Penny can analyze uploaded CSVs, answer accounting questions, and route data to csv2api as needed—all with structured logging and persistent chat history.
+A standalone Streamlit chatbot app for crypto accounting, featuring CSV upload, DeepSeek R1 (Ollama) LLM integration, ChromaDB vector store, and a friendly, professional Penny persona. Penny can analyze uploaded CSVs, answer accounting questions, and route data to csv2api as needed... all with structured logging and persistent chat history.
 
 ## Features
 - **Conversational Chat UI** with persistent history and Penny persona

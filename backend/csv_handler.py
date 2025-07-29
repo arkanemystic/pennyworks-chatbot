@@ -166,7 +166,11 @@ def find_csv2api_executable() -> Optional[str]:
 
 def run_csv2api_subprocess(csv_path: str, user_prompt: str = None) -> Dict[str, Any]:
     """Execute csv2api as a subprocess with proper error handling and correct argument format"""
-    
+
+    logging.info(f"Preparing to run csv2api on: {csv_path}")
+    if user_prompt:
+        logging.info(f"Prompt passed to csv2api: {user_prompt}")
+
     # Validate CSV file first
     if not is_valid_csv_file(csv_path):
         return {
@@ -211,10 +215,11 @@ def run_csv2api_subprocess(csv_path: str, user_prompt: str = None) -> Dict[str, 
     # Set PYTHONPATH to csv2api_root for src imports
     env = os.environ.copy()
     env['PYTHONPATH'] = csv2api_root + os.pathsep + env.get('PYTHONPATH', '')
-    
+
     # If user_prompt is provided, set it as an environment variable
     if user_prompt:
         env['CSV2API_QUERY'] = user_prompt
+        logging.info(f"CSV2API_QUERY env set to: {user_prompt}")
     
     for attempt, current_cmd in enumerate(commands_to_try, 1):
         try:
@@ -343,6 +348,15 @@ def handle_user_message(user_input: str, csv_path: str = None) -> str:
         
         # Execute csv2api subprocess
         logging.info("Executing csv2api subprocess...")
+
+        # Diagnostic: log CSV contents before running csv2api
+        try:
+            with open(csv_path, 'r', encoding='utf-8') as f:
+                contents = f.read()
+                logging.info("[DEBUG] Contents of CSV passed to csv2api:\n" + repr(contents))
+        except Exception as e:
+            logging.error(f"Could not read CSV file for debugging: {e}")
+
         result = run_csv2api_subprocess(csv_path, user_input)
         
         # Format response based on result
